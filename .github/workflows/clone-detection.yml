@@ -1,0 +1,32 @@
+name: Detect clones
+
+on:
+  pull_request:
+    types: [opened, synchronized, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  clone-detection:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install python
+        uses: actions/setup-python@v5
+        
+      - name: Install dependencies
+        run: |
+          if [ -f requirementx.txt ]; pip install -r requirements.txt; fi
+          
+      - name: Run script
+        run: |
+          python src/app.py
+
+
+

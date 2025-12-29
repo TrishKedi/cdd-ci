@@ -13,6 +13,7 @@ sap.ui.define([
 	"use strict";
 	
 
+	
 	return BaseController.extend("sap.ui.demo.cart.controller.Checkout", {
 		types: {
 			email: new EmailType()
