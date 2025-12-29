@@ -8,7 +8,8 @@ sap.ui.define([
 ], (BaseController, JSONModel, Device, formatter, MessageBox, MessageToast) => {
 	"use strict";
 
-	
+
+	// Added dummy changes
 	const sCartModelName = "cartProducts";
 	const sSavedForLaterEntries = "savedForLaterEntries";
 	const sCartEntries = "cartEntries";
