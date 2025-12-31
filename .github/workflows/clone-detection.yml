@@ -81,7 +81,7 @@ jobs:
                 const { owner, repo } = context.repo;
                 const issue_number = context.payload.pull_request.number;
                 await github.rest.issues.createComment({
-                  owner, repo, issue_number, all_lines
+                  owner, repo, issue_number, "<!-- CLONE ANALYSIS -->"
                 });
 
             }
