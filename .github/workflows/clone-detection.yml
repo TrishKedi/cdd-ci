@@ -26,9 +26,16 @@ jobs:
         run: |
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
+      - name: Get changed files
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" > changed_files.txt
+          echo "Changed files:"
+          cat changed_files.txt
+
       - name: Run script
         run: |
-          python src/app.py
+          python src/app.py --changed-files changed_files.txt
 
 
 
