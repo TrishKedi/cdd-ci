@@ -1,4 +1,4 @@
-tree_sitter,
+tree_sitter
 tree_sitter_javascript
-pydantic",
+pydantic
 pydantic-settings
