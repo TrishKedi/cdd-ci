@@ -1,5 +1,5 @@
 tree_sitter==0.23.2
-tree_sitter_javascript
+tree_sitter_javascript===0.23.1
 pydantic
 faiss-cpu
 openai
