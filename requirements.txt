@@ -1,4 +1,6 @@
 tree_sitter
 tree_sitter_javascript
 pydantic
+faiss-cpu
+openai
 pydantic-settings
