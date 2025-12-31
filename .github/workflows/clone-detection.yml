@@ -70,8 +70,7 @@ jobs:
 
                         }, first_line);
 
-                        console.log(lines);
-
+      
                         all_lines+=lines;
 
                         
