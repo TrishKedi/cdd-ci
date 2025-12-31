@@ -20,7 +20,7 @@ sap.ui.define([
 
 
 
-		
+		// Added dummy changes
 
 		// Define filterPreviousValues as global variables because they need to be accessed from different functions
 		_iLowFilterPreviousValue: 0,
