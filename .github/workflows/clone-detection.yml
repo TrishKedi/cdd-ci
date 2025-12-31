@@ -81,7 +81,7 @@ jobs:
                 const { owner, repo } = context.repo;
                 const issue_number = context.payload.pull_request.number;
                 await github.rest.issues.createComment({
-                  owner, repo, issue_number, body: "This is a test comment from GitHub Actions."
+                  owner, repo, issue_number, body: all_lines
                 });
 
             }
