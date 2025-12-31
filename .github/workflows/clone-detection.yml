@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   clone-detection:
@@ -69,7 +70,7 @@ jobs:
 
                         }, first_line);
 
-                        console.log(lines);
+                        # console.log(lines);
 
                         all_lines+=lines;
 
