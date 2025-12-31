@@ -70,7 +70,7 @@ jobs:
 
                         }, first_line);
 
-                        # console.log(lines);
+                        console.log(lines);
 
                         all_lines+=lines;
 
