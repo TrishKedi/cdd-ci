@@ -30,25 +30,25 @@ def run_ci_pipeline():
         print(f"\n{len(candidate)}\n")
 
         
-        # query_embeddings = embedder.generate_embeddings(query)
-        # candidate_embeddings = embedder.generate_embeddings(candidate)
-        # similarity_lookup.build_index(candidate_embeddings)
+        query_embeddings = embedder.generate_embeddings(query)
+        candidate_embeddings = embedder.generate_embeddings(candidate)
+        similarity_lookup.build_index(candidate_embeddings)
 
-        # search_results = similarity_lookup.run_semantic_search(query_embeddings)
+        search_results = similarity_lookup.run_semantic_search(query_embeddings)
 
-        # all_query_chunks = code_analyzer.get_processed_code(query_chunks, all=True)
-        # print(len(all_query_chunks))
-        # all_candidate_chunks = code_analyzer.get_processed_code(candidate_chunks, all=True)
+        all_query_chunks = code_analyzer.get_processed_code(query_chunks, all=True)
+        print(len(all_query_chunks))
+        all_candidate_chunks = code_analyzer.get_processed_code(candidate_chunks, all=True)
 
-        # clones = similarity_lookup.process_results(
-        #     search_results, 
-        #     all_query_chunks, 
-        #     all_candidate_chunks
-        # )
+        clones = similarity_lookup.process_results(
+            search_results, 
+            all_query_chunks, 
+            all_candidate_chunks
+        )
 
-        # print("\n=======CLONES========\n")
-        # # print(f"\n{clones}\n")
-        # print(f"\n{len(clones)}\n")
+        print("\n=======CLONES========\n")
+        # print(f"\n{clones}\n")
+        print(f"\n{len(clones)}\n")
 
 
      
