@@ -1,4 +1,5 @@
 import re
+import argparse
 import subprocess
 import tree_sitter_javascript as tsjs
 from pathlib import Path
@@ -65,31 +66,42 @@ class CodeAnalyzer:
         ) @afn
         """
 
-   
     def get_changed_files(self):
-        changed_files = []
-        try:
-            print("retrieving changed files")
-            diff_result = subprocess.run(
-                ['git', 'diff', '--name-only', '*.js'],
-                capture_output=True,
-                text=True,
-                timeout=300
-            )
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--changed-files', required=True)
+        args = parser.parse_args()
 
-            if diff_result.returncode == 0:
-                raw_output = diff_result.stdout
-                output =  raw_output.split("\n")
-                changed_files = output
+        with open(args.changed_files, 'r', encoding='utf-8') as f:
+            files = f.read()
+            changed_files = files.split('\n')
 
-        except subprocess.TimeoutExpired:
-            print(f"Timed out")
-
-        except Exception as e:
-            print(f"Failed to get changed files: {e}")
-
-        finally:
             return changed_files
+            # print(files.split('\n'))
+
+    # def get_changed_files(self):
+    #     changed_files = []
+    #     try:
+    #         print("retrieving changed files")
+    #         diff_result = subprocess.run(
+    #             ['git', 'diff', '--name-only', '*.js'],
+    #             capture_output=True,
+    #             text=True,
+    #             timeout=300
+    #         )
+
+    #         if diff_result.returncode == 0:
+    #             raw_output = diff_result.stdout
+    #             output =  raw_output.split("\n")
+    #             changed_files = output
+
+    #     except subprocess.TimeoutExpired:
+    #         print(f"Timed out")
+
+    #     except Exception as e:
+    #         print(f"Failed to get changed files: {e}")
+
+    #     finally:
+    #         return changed_files
 
     def should_process_file(self, file_path: Path) -> bool:
 

@@ -42,7 +42,7 @@ class SimilarityLookup:
             scores = score_nb[1]
             neighbour_similarity_map = list(zip(neighbours, scores))
 
-            print(f"VECTOR_ID: \n\n\n{query_id}\n\n\n")
+            # print(f"VECTOR_ID: \n\n\n{query_id}\n\n\n")
             
 
             block = query[query_id]

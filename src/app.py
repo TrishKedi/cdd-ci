@@ -1,9 +1,12 @@
+
 from core.services import CodeAnalyzer, Embedder, SimilarityLookup
 
 
 code_analyzer = CodeAnalyzer()
 embedder = Embedder()
 similarity_lookup = SimilarityLookup()
+
+
 
 def run_ci_pipeline():
 
@@ -44,7 +47,7 @@ def run_ci_pipeline():
         )
 
         print("\n=======CLONES========\n")
-        print(f"\n{clones}\n")
+        # print(f"\n{clones}\n")
         print(f"\n{len(clones)}\n")
 
 
@@ -52,3 +55,5 @@ def run_ci_pipeline():
 # run_ci_pipeline()
 if __name__ == '__main__':
     run_ci_pipeline()
+
+

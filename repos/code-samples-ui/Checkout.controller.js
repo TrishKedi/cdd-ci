@@ -14,7 +14,7 @@ sap.ui.define([
 	
 
 	
-
+	
 	return BaseController.extend("sap.ui.demo.cart.controller.Checkout", {
 		types: {
 			email: new EmailType()
