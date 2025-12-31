@@ -1,4 +1,4 @@
-tree_sitter
+tree_sitter==0.23.2
 tree_sitter_javascript
 pydantic
 faiss-cpu
