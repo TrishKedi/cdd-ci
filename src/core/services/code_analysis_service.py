@@ -230,10 +230,25 @@ class CodeAnalyzer:
 
         return processed_fragments
 
+    def extract_candidate_files(self, code_dir:str)->List[Path]:
+        directory = Path(code_dir)
+        
+        if not directory.exists() or not directory.is_dir():
+            print(f"❌ {directory} is not a valid directory.")
+            # raise typer.Exit(code=1)
+            return
 
-    def extract_code_chuncks(self, batch_size:int = 50 ) -> Iterator[Dict[str, Any]]:
+        # Get list of all JS files and filter them
+        return list(directory.rglob("*.js"))
+
+    def extract_code_chuncks(self, query_files:bool=True, batch_size:int = 50, code_dir:str="repos" ) -> Iterator[Dict[str, Any]]:
 
         files = self.get_changed_files()
+
+        if not query_files:
+            files = self.extract_candidate_files(code_dir)
+
+
         file_paths = [
             Path(file) for file in files 
             if file
@@ -252,8 +267,32 @@ class CodeAnalyzer:
             with Pool(processes=num_processes) as pool:
                 chunks = pool.map(self._process_single_file, batch)
 
-                for chunk in chunks:
-                    yield chunk
+                print("======CODE CHUNKS====")
+
+                # for chunk in chunks:
+                    
+                #     for code_chunk in chunk:
+                #         print(f"\n{code_chunk}\n")
+                #         yield code_chunk
+
+                return chunks
 
             processed_files+=len(batch)
+
+    def get_processed_code(self, chunks, all=False) -> List[str]:
+
+        code_chunks = []
+        for file_chunks in chunks:
+        
+            for chunk in file_chunks:
+                # print(chunk)
+                not all and code_chunks.append(chunk.get('processedCode'))
+                all and code_chunks.append(chunk)
+
+        return code_chunks
+        # def file_chunks(f_chunks):
+        #     return [chunk.get('processedCode') for chunk in f_chunks]
+
+        # return list(map(file_chunks, chunks))
+
 

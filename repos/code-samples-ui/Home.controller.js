@@ -10,7 +10,6 @@ sap.ui.define([
 	return BaseController.extend("sap.ui.demo.cart.controller.Home", {
 		formatter,
 
-		
 		onInit() {
 			const oComponent = this.getOwnerComponent();
 			this._router = oComponent.getRouter();
