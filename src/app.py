@@ -1,4 +1,5 @@
 
+import json
 from core.services import CodeAnalyzer, Embedder, SimilarityLookup
 
 
@@ -49,6 +50,12 @@ def run_ci_pipeline():
         print("\n=======CLONES========\n")
         # print(f"\n{clones}\n")
         print(f"\n{len(clones)}\n")
+
+        with open('clones.json', 'w') as cf:
+
+            json.dump(clones, cf, indent=2)
+
+
 
 
      
