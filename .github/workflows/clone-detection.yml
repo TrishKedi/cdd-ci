@@ -14,6 +14,7 @@ jobs:
     environment: main
     env: 
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: checkout
@@ -23,6 +24,9 @@ jobs:
 
       - name: Install python
         uses: actions/setup-python@v5
+
+      - name: Setup Review Dog
+        uses: reviewdog/action-setup@v1
         
       - name: Install dependencies
         run: |
@@ -39,52 +43,27 @@ jobs:
         run: |
           python src/app.py --changed-files changed_files.txt
 
-      - name: Add clone comments
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            if (fs.existsSync('clones.json')) {
-                const content = fs.readFileSync('clones.json', 'utf-8')
-                const all_clones = JSON.parse(content)
-    
-                let all_lines = '';
-                all_clones.forEach( (parent_clone) => {
-                    
-                    const parent_code = parent_clone.code;
-                    const parent_file = parent_clone.path;
-                    const parent_start = parent_clone.start;
-                    const clones =  parent_clone.matches;
-                    console.log(clones)
-
-                    if (clones){
-                        const first_line = `## File: ${parent_file}:${parent_start} \n ${parent_code} \n` +
-                            `### Clones`
-
-                        const lines = clones.reduce((clone_comment, clone) => {
-                            const clone_code = clone.code;
-                            const clone_file = clone.path;
-                            const clone_start = clone.start;
-
-                            return clone_comment + `\n ### File: ${clone_file}:${clone_start}\n ${clone_code} \n`
-
-                        }, first_line);
-
-      
-                        all_lines+=lines;
-
-                        
+      - name: PR comments with Review Dog
+        run: |
+            cat << 'JSON' | reviewdog -f=rdjson -reporter=github-pr-review -level=warning
+            {
+              "source": {"name": "my-analyzer"},
+              "diagnostics": [
+                {
+                  "message": "Hello from reviewdog (test)",
+                  "location": {
+                    "path": "src/index.js",
+                    "range": {
+                      "start": {"line": 1, "column": 1},
+                      "end":   {"line": 1, "column": 2}
                     }
-                
-                });
-
-                const { owner, repo } = context.repo;
-                const issue_number = context.payload.pull_request.number;
-                await github.rest.issues.createComment({
-                  owner, repo, issue_number, body: all_lines
-                });
-
+                  },
+                  "severity": "WARNING"
+                }
+              ]
             }
+            JSON
+
 
 
 
