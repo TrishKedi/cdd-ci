@@ -198,6 +198,9 @@ class MatchProcessor:
             }
             for i, chunk in enumerate(chunks)
         ]
+
+    def generate_rdjson():
+        pass
        
        
 

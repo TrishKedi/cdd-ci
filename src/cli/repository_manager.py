@@ -93,9 +93,9 @@ class RepositoryManager:
         print("Get changed files")
         print(changed_files_path)
         files = [
-            "../repos/code-samples-ui/Cart.controller.js",
-            "../repos/code-samples-ui/Category.controller.js",
-            "../repos/code-samples-ui/Checkout.controller.js"
+            "repos/code-samples-ui/Cart.controller.js",
+            "repos/code-samples-ui/Category.controller.js",
+            "repos/code-samples-ui/Checkout.controller.js"
         ]
 
         return [Path(file) for file in files]

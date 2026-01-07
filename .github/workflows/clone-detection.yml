@@ -41,7 +41,7 @@ jobs:
 
       - name: Run script
         run: |
-          python src/app.py --changed-files changed_files.txt
+          python src/app.py --changed-files changed_files.txt --candidate-repo repos/code-samples-ui
 
       - name: PR comments with Review Dog
         run: |
