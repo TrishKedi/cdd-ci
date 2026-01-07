@@ -45,7 +45,7 @@ jobs:
 
       - name: PR comments with Review Dog
         run: |
-            cat << 'JSON' | reviewdog -f=rdjson -reporter=github-pr-review -level=warning
+            cat << 'JSON' | reviewdog -f=rdjson -reporter=github-pr-review -level=warning -filter-mode=nofilter
             {
               "source": {"name": "my-analyzer"},
               "diagnostics": [
