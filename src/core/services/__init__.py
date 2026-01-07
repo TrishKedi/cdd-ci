@@ -11,7 +11,6 @@ This package provides the main service classes for:
 from .embedding_service import EmbeddingIndex
 from .similarity_lookup_service import SimilarityLookup
 from .code_analysis_service import CodeBaseProcessor
-from .reranking_service import LLMReranker
 from .match_processor_service import MatchProcessor
 from .openai_service import OpenAIService
 
@@ -19,7 +18,6 @@ __all__ = [
     "EmbeddingIndex", 
     "SimilarityLookup", 
     "CodeBaseProcessor",
-    "LLMReranker",
     "MatchProcessor",
     "OpenAIService"
 ]

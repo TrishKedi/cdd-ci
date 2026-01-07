@@ -42,7 +42,7 @@ class SimilarityLookup:
         Returns:
             List of tuples containing (neighbor_ids, similarity_scores)
         """
-        similarity_scores, neighbours = faiss_index.search(query_embeddings, k=3)
+        similarity_scores, neighbours = faiss_index.search(query_embeddings, k=1)
         search_results = list(zip(neighbours.tolist(), similarity_scores.tolist()))
         
         # print(type(similarity_scores), type(neighbours))

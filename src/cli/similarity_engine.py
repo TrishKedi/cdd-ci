@@ -14,7 +14,7 @@ from rich.console import Console
 from .exporter import Exporter
 from .visualizer import Visualizer
 from config.settings import default_similarity_threshold
-from core.services import SimilarityLookup, LLMReranker, MatchProcessor
+from core.services import SimilarityLookup, MatchProcessor
 
 
 # Set up logging
@@ -115,7 +115,7 @@ class SimilarityEngine:
             reasoning=self.reasoning, 
             use_pager=self.less
         )
-        self.llm_reranker: LLMReranker = LLMReranker()
+
         self.exporter: Exporter = Exporter(auto_open=True, verbose=True)
         self.match_processor: MatchProcessor = MatchProcessor()
         self.console: Console = Console()
@@ -403,19 +403,19 @@ class SimilarityEngine:
         """
         
         # Display progress for LLM processing with distinct visual styling
-        with self.console.status("[bold magenta]LLM re-ranking matches...", spinner="dots"):
-            # Send entire batch to LLM service for semantic validation
-            # This uses multi-threading internally to process code pairs concurrently
-            reranked_matches: List[Dict[str, Any]] = await self.llm_reranker.rerank_matches_batch(matches_batch)
+        # with self.console.status("[bold magenta]LLM re-ranking matches...", spinner="dots"):
+        #     # Send entire batch to LLM service for semantic validation
+        #     # This uses multi-threading internally to process code pairs concurrently
+        #     reranked_matches: List[Dict[str, Any]] = await self.llm_reranker.rerank_matches_batch(matches_batch)
         
-        # Process each re-ranked match in the batch
-        for matches in reranked_matches:
-            # Display matches in terminal only if not serving to web interface
-            # This avoids duplicate output when web interface is active
-            if not self.serve:
-                self.visualizer.display_matches(matches)
+        # # Process each re-ranked match in the batch
+        # for matches in reranked_matches:
+        #     # Display matches in terminal only if not serving to web interface
+        #     # This avoids duplicate output when web interface is active
+        #     if not self.serve:
+        #         self.visualizer.display_matches(matches)
 
-            # Export validated matches to configured file formats
-            if self.export:
-                self.exporter.export(matches)
+        #     # Export validated matches to configured file formats
+        #     if self.export:
+        #         self.exporter.export(matches)
 
