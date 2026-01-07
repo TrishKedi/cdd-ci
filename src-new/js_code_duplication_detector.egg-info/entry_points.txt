@@ -1,0 +1,2 @@
+[console_scripts]
+find-duplicates = app:app
