@@ -38,7 +38,7 @@ class Exporter:
         self.console = Console()
         
         # Track export state
-        self.json_file_path: Optional[Path] = 'diagonistics.json'
+        self.json_file_path: Optional[Path] = Path('diagonistics.json')
         self.jsonl_file_path: Optional[Path] = None
         self.match_count: int = 0
         self.is_json_initialized: bool = False
@@ -118,7 +118,7 @@ class Exporter:
         if not self.is_json_initialized:
             # Generate filename in Downloads directory
             filename = self._generate_filename("matches", "json")
-            self.json_file_path = self.export_dir / filename
+            # self.json_file_path = self.export_dir / filename
             
             with open(self.json_file_path, "w", encoding="utf-8") as f:
                 f.write("[\n")
@@ -271,3 +271,7 @@ class Exporter:
     def export_rdjson(self, search_results):
         json.dump(search_results, sys.stdout, ensure_ascii=False)
         sys.stdout.write("\n")
+
+    def export_diagonistics(self, search_results):
+          with open(self.json_file_path, "w", encoding="utf-8") as f:
+            json.dump(search_results, f, indent=2, ensure_ascii=False, default=str)
