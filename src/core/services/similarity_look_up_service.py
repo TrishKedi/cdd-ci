@@ -1,2 +1,0 @@
-class SimilarityLookup:
-    pass

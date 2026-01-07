@@ -2,14 +2,18 @@ name: Detect clones
 
 on:
   pull_request:
-    types: [opened, synchronized, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   clone-detection:
     runs-on: ubuntu-latest
+    environment: main
+    env: 
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     steps:
       - name: checkout
@@ -22,11 +26,66 @@ jobs:
         
       - name: Install dependencies
         run: |
-          if [ -f requirementx.txt ]; pip install -r requirements.txt; fi
-          
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Get changed files
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- '*.js' > changed_files.txt
+          echo "Changed files:"
+          cat changed_files.txt
+
       - name: Run script
         run: |
-          python src/app.py
+          python src/app.py --changed-files changed_files.txt
+
+      - name: Add clone comments
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('clones.json')) {
+                const content = fs.readFileSync('clones.json', 'utf-8')
+                const all_clones = JSON.parse(content)
+    
+                let all_lines = '';
+                all_clones.forEach( (parent_clone) => {
+                    
+                    const parent_code = parent_clone.code;
+                    const parent_file = parent_clone.path;
+                    const parent_start = parent_clone.start;
+                    const clones =  parent_clone.matches;
+                    console.log(clones)
+
+                    if (clones){
+                        const first_line = `## File: ${parent_file}:${parent_start} \n ${parent_code} \n` +
+                            `### Clones`
+
+                        const lines = clones.reduce((clone_comment, clone) => {
+                            const clone_code = clone.code;
+                            const clone_file = clone.path;
+                            const clone_start = clone.start;
+
+                            return clone_comment + `\n ### File: ${clone_file}:${clone_start}\n ${clone_code} \n`
+
+                        }, first_line);
+
+      
+                        all_lines+=lines;
+
+                        
+                    }
+                
+                });
+
+                const { owner, repo } = context.repo;
+                const issue_number = context.payload.pull_request.number;
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number, body: all_lines
+                });
+
+            }
+
 
 
 

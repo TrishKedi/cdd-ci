@@ -1,4 +1,6 @@
-tree_sitter,
-tree_sitter_javascript
-pydantic",
+tree_sitter==0.23.2
+tree_sitter_javascript===0.23.1
+pydantic
+faiss-cpu
+openai
 pydantic-settings

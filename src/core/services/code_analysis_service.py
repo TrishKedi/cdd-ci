@@ -1,4 +1,5 @@
 import re
+import argparse
 import subprocess
 import tree_sitter_javascript as tsjs
 from pathlib import Path
@@ -65,31 +66,43 @@ class CodeAnalyzer:
         ) @afn
         """
 
-   
     def get_changed_files(self):
-        changed_files = []
-        try:
-            print("retrieving changed files")
-            diff_result = subprocess.run(
-                ['git', 'diff', '--name-only', '*.js'],
-                capture_output=True,
-                text=True,
-                timeout=300
-            )
+        print("Get changed files")
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--changed-files', required=True)
+        args = parser.parse_args()
 
-            if diff_result.returncode == 0:
-                raw_output = diff_result.stdout
-                output =  raw_output.split("\n")
-                changed_files = output
+        with open(args.changed_files, 'r', encoding='utf-8') as f:
+            files = f.read()
+            changed_files = files.split('\n')
 
-        except subprocess.TimeoutExpired:
-            print(f"Timed out")
-
-        except Exception as e:
-            print(f"Failed to get changed files: {e}")
-
-        finally:
             return changed_files
+            # print(files.split('\n'))
+
+    # def get_changed_files(self):
+    #     changed_files = []
+    #     try:
+    #         print("retrieving changed files")
+    #         diff_result = subprocess.run(
+    #             ['git', 'diff', '--name-only', '*.js'],
+    #             capture_output=True,
+    #             text=True,
+    #             timeout=300
+    #         )
+
+    #         if diff_result.returncode == 0:
+    #             raw_output = diff_result.stdout
+    #             output =  raw_output.split("\n")
+    #             changed_files = output
+
+    #     except subprocess.TimeoutExpired:
+    #         print(f"Timed out")
+
+    #     except Exception as e:
+    #         print(f"Failed to get changed files: {e}")
+
+    #     finally:
+    #         return changed_files
 
     def should_process_file(self, file_path: Path) -> bool:
 
@@ -230,30 +243,73 @@ class CodeAnalyzer:
 
         return processed_fragments
 
+    def extract_candidate_files(self, code_dir:str)->List[Path]:
+        directory = Path(code_dir)
+        
+        if not directory.exists() or not directory.is_dir():
+            print(f"❌ {directory} is not a valid directory.")
+            # raise typer.Exit(code=1)
+            return
 
-    def extract_code_chuncks(self, batch_size:int = 50 ) -> Iterator[Dict[str, Any]]:
+        # Get list of all JS files and filter them
+        return list(directory.rglob("*.js"))
+
+    def extract_code_chunks(self, query_files:bool=True, code_dir:str="repos", batch_size:int=50 ) -> Iterator[Dict[str, Any]]:
 
         files = self.get_changed_files()
-        file_paths = [
-            Path(file) for file in files 
-            if file
-        ]
-        print(f"File paths: {file_paths}")
-        valid_files = [
-            file_path for file_path in file_paths 
-            if self.should_process_file(file_path)
-        ]
-        num_processes = min(cpu_count(), batch_size, len(valid_files))
-        processed_files = 0
+        print(f"Files: {files}")
 
-        for i in range(0, len(valid_files), batch_size):
-            batch = valid_files[i:i+batch_size]
+        if not query_files:
+            files = self.extract_candidate_files(code_dir)
+        
+        
+        if files:
+            
+            valid_files = [
+                Path(file_path) for file_path in files 
+                if file_path  and self.should_process_file(Path(file_path))
+            ]
 
-            with Pool(processes=num_processes) as pool:
-                chunks = pool.map(self._process_single_file, batch)
+            if valid_files:
+                print(f"File paths: {valid_files}")
+                num_processes = min(cpu_count(), len(valid_files))
+                
+                chunk_size = max(1, (len(valid_files) // num_processes))
+                print(f"chunk_size: {chunk_size}")
+                with Pool(processes=num_processes) as pool:
+                    chunks = pool.imap(self._process_single_file, valid_files, chunksize=50)
+                    
+                 
+                    for chunk in chunks:
+                        # print(len(chunk))
+                        for i in range(0, len(chunk), batch_size):
+                            # print(i)
+                            chunk_batch = chunk[i:i+batch_size]
+                            yield  chunk_batch
+                            # print(f"\n{chunk_batch}\n")
+                        
+                        # for code_chunk in chunk:
+                        #     print(f"\n{code_chunk}\n")
+                        #     # yield code_chunk
 
-                for chunk in chunks:
-                    yield chunk
+                
 
-            processed_files+=len(batch)
+          
+
+    def get_processed_code(self, chunks, all=False) -> List[str]:
+
+        code_chunks = []
+        for file_chunks in chunks:
+        
+            for chunk in file_chunks:
+                # print(chunk)
+                not all and code_chunks.append(chunk.get('processedCode'))
+                all and code_chunks.append(chunk)
+
+        return code_chunks
+        # def file_chunks(f_chunks):
+        #     return [chunk.get('processedCode') for chunk in f_chunks]
+
+        # return list(map(file_chunks, chunks))
+
 

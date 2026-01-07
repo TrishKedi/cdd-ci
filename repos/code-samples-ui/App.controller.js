@@ -4,7 +4,9 @@ sap.ui.define([
 ], (BaseController, JSONModel) => {
 	"use strict";
 
+
 	
+
 	return BaseController.extend("sap.ui.demo.cart.controller.App", {
 		onInit() {
 			const oViewModel = new JSONModel({
