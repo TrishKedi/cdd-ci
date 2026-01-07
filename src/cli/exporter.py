@@ -267,3 +267,7 @@ class Exporter:
         self.is_json_initialized = False
         self.json_file_path = None
         self.jsonl_file_path = None
+
+    def export_rdjson(self, search_results):
+        json.dump(search_results, sys.stdout, ensure_ascii=False)
+        sys.stdout.write("\n")

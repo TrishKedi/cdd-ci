@@ -39,30 +39,10 @@ jobs:
           echo "Changed files:"
           cat changed_files.txt
 
-      - name: Run script
+      - name: Run script (PR comments with Review Dog)
         run: |
-          python src/app.py --changed-files changed_files.txt --candidate-repo repos/code-samples-ui
+            python src/app.py --changed-files changed_files.txt --candidate-repo repos/code-samples-ui | reviewdog -f=rdjson -reporter=github-pr-review -level=warning -filter-mode=nofilter
 
-      - name: PR comments with Review Dog
-        run: |
-            cat << 'JSON' | reviewdog -f=rdjson -reporter=github-pr-review -level=warning -filter-mode=nofilter
-            {
-              "source": {"name": "my-analyzer"},
-              "diagnostics": [
-                {
-                  "message": "Hello from reviewdog (test)",
-                  "location": {
-                    "path": "repos/code-samples-ui/Cart.controller.js",
-                    "range": {
-                      "start": {"line": 1, "column": 1},
-                      "end":   {"line": 1, "column": 2}
-                    }
-                  },
-                  "severity": "WARNING"
-                }
-              ]
-            }
-            JSON
 
 
 

@@ -124,16 +124,28 @@ class SimilarityEngine:
         search_results  = self.similarity_lookup.run_semantic_search(query, index)
         candidates = self.match_processor.replace_candidates(search_results)
         # print(candidates[0])
-        print(chunks)
-        print(len(chunks))
-        print(chunks[0])
-        return [
+        # print(chunks)
+        # print(len(chunks))
+        # print(chunks[0])
+        diagnostics = [
             {
-                **chunk,
-                "matches": candidates[i]
+                "message": f"similar to {candidates[i][0].get('path')}:{candidates[i][0].get('start')}-{candidates[i][0].get('end')}",
+                "severity": "WARNING",
+                "location": {
+                    "path": chunk.get('path'),
+                    "range": {
+                        "start": {"line": chunk.get('start'), "column": 1},
+                        "end":   {"line": chunk.get('end'),   "column": 1},
+                    }
+                }
             }
             for i, chunk in enumerate(chunks)
         ]
+
+        return {
+            "source": {"name": "find-duplicates"},
+            "diagnostics": diagnostics
+        }
         
 
         # matches = await self.match_processor.process_matches(
