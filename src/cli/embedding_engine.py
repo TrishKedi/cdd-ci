@@ -15,13 +15,6 @@ from rich.status import Status
 
 from core.utils.helpers import get_index_path
 from config.settings import index_dir
-from core.database.ingest import (
-    finalize_index_build, 
-    get_embeddings, 
-    ingest_index, 
-    get_index, 
-    delete_single_repo
-)
 from core.services import CodeBaseProcessor, SapAiCore, EmbeddingIndex, OpenAIService
 
 

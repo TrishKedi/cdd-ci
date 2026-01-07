@@ -5,7 +5,7 @@ including deduplication, threshold filtering, and match data enrichment.
 """
 import json
 from typing import List, Tuple, Dict, Any, Set, Optional
-from core.database.ingest import get_embeddings
+
 
 
 class MatchProcessor:

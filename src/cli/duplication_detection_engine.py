@@ -16,7 +16,7 @@ from .exporter import Exporter
 from .embedding_engine import EmbeddingEngine
 from .similarity_engine import SimilarityEngine
 from config.settings import index_dir
-from core.database.ingest import delete_single_repo
+
 
 
 class DuplicationDetectionEngine:
