@@ -87,7 +87,7 @@ class EmbeddingEngine:
 
     async def embed_code_blocks_in_batches(
         self, 
-        files: List[Path[str]],
+        files: List[Path],
         is_query: bool
     ) -> None:
         print("embedding..................")
