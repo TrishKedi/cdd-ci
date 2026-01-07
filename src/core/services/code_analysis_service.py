@@ -23,62 +23,10 @@ from functools import partial
 from multiprocessing import Pool, cpu_count
 from pathlib import Path
 from typing import Dict, Any, Tuple, List, Optional, Set, Iterator
-
 import numpy as np
 import typer
 from tree_sitter import Language, Parser, Query, Tree, Node
 import tree_sitter_javascript as tsjs
-
-from config.settings import cache_file
-
-@dataclass
-class FileCache:
-    """Cache entry for a processed file."""
-    mtime: float           # File's modification time
-    size: int             # File size
-    fragments: List[Dict]  # Extracted code fragments
-    hash: str             # Content hash
-
-class FileProcessingCache:
-    """Manages caching of processed files to avoid reprocessing unchanged files."""
-    
-    def __init__(self):
-        self.cache_file = cache_file
-        self.cache: Dict[str, FileCache] = {}
-        self.load_cache()
-
-    def save_cache(self) -> None:
-        """Save cache to disk."""
-        try:
-            with open(self.cache_file, 'w') as f:
-                cache_dict = {
-                    path: {
-                        'mtime': entry.mtime,
-                        'size': entry.size,
-                        'fragments': entry.fragments,
-                        'hash': entry.hash
-                    }
-                    for path, entry in self.cache.items()
-                }
-                json.dump(cache_dict, f)
-
-        except Exception as e:
-            typer.echo(f"⚠️ Cache saving failed: {e}")
-    
-    def load_cache(self) -> None:
-        """Load cache from disk if it exists."""
-        try:
-            if os.path.exists(self.cache_file):
-                with open(self.cache_file, 'r') as f:
-                    data = json.load(f)
-                    self.cache = {
-                        path: FileCache(**entry)
-                        for path, entry in data.items()
-                    }
-        except Exception as e:
-            typer.echo(f"⚠️ Cache loading failed: {e}")
-            self.cache = {}
-    
 
 # Default patterns for files to exclude
 DEFAULT_EXCLUDE_PATTERNS = {
@@ -159,9 +107,6 @@ class CodeBaseProcessor:
         code_blocks: List of extracted code blocks with metadata
         exclude_patterns: Set of glob patterns for files to exclude
         minified_patterns: List of compiled regex patterns to detect minified files
-        cache: File processing cache to avoid reprocessing unchanged files
-        cache_hits: Counter for cache hit statistics
-        cache_misses: Counter for cache miss statistics
     """
 
     def __init__(self) -> None:
@@ -172,12 +117,7 @@ class CodeBaseProcessor:
         self.minified_patterns: List[re.Pattern[str]] = [
             re.compile(pattern) for pattern in MINIFIED_JS_INDICATORS
         ]
-        
-        # Cache management
-        self.cache: FileProcessingCache = FileProcessingCache()
-        self.cache_hits: int = 0
-        self.cache_misses: int = 0
-        
+             
         # Internal counter for ID assignment
         self._id_counter: int = 0
         
@@ -384,91 +324,7 @@ class CodeBaseProcessor:
         # Get list of all JS files and filter them
         return list(directory.rglob("*.js"))
 
-    def extract_raw_code(self, code_dir: str, batch_size: int = 50) -> Iterator[Dict[str, Any]]:
-        """Extract code blocks from JavaScript files in a directory using parallel processing.
         
-        This method combines parallel processing, lazy loading, and file caching to optimize
-        both CPU and memory usage while avoiding reprocessing unchanged files. Instead of
-        loading all files at once, it processes them in batches while yielding results
-        incrementally.
-        
-        Args:
-            code_dir: Path to the directory containing JavaScript files
-            batch_size: Number of files to process in each batch
-            
-        Yields:
-            Dict[str, Any]: Code blocks with their metadata, yielded as they're processed
-            
-        Raises:
-            typer.Exit: If the directory does not exist or is not valid
-        """
-        self._id_counter = 0
-        directory = Path(code_dir)
-        
-        if not directory.exists() or not directory.is_dir():
-            typer.echo(f"❌ {directory} is not a valid directory.")
-            raise typer.Exit(code=1)
-
-        # Get list of all JS files and filter them
-        all_js_files = list(directory.rglob("*.js"))
-        js_files = [f for f in all_js_files if self.should_process_file(f)]
-      
-        
-        
-        if not js_files:
-            typer.echo("No suitable JavaScript files found to process.")
-            return
-
-        # First pass: check cache and collect files needing processing
-        files_to_process = []
-        for file_path in js_files:
-
-            cached_fragments = self.check_cache(file_path)
-            if cached_fragments is not None:
-                # Yield cached fragments immediately
-                for fragment in cached_fragments:
-                    fragment['id'] = self._id_counter
-                    self._id_counter += 1
-                    yield fragment
-            else:
-                files_to_process.append(file_path)
-
-        if not files_to_process:
-            typer.echo("✨ All files loaded from cache!")
-            return
-
-        # Calculate optimal number of processes for remaining files
-        num_processes = min(cpu_count(), batch_size, len(files_to_process))
-        total_files = len(files_to_process)
-        processed_files = 0
-        
-        typer.echo(f"Processing {total_files} uncached files")
-
-        # Process remaining files in batches
-        for i in range(0, len(files_to_process), batch_size):
-            batch = files_to_process[i:i + batch_size]
-            typer.echo(f"\nProcessing batch {(i//batch_size) + 1} ({len(batch)} files)")
-            
-            # Process batch in parallel
-            with Pool(processes=num_processes) as pool:
-                fragment_lists = pool.map(self._process_single_file, batch)
-                
-            # Update cache and yield fragments as they're processed
-            for file_path, fragments in zip(batch, fragment_lists):
-                if fragments:  # Only cache successful processing
-                    self.update_cache(file_path, fragments)
-                    for fragment in fragments:
-                        fragment['id'] = self._id_counter
-                        self._id_counter += 1
-                        yield fragment
-                    
-            processed_files += len(batch)
-            typer.echo(f"Progress: {processed_files}/{total_files} files processed")
-        
-
-        # Cache statistics are tracked in self.cache_hits and self.cache_misses
-        # but not displayed to reduce verbosity
-
     def extract_code_chunks(self, files:List[str], is_candidate:bool, chunk_size:int=50, batch_size:int=50 ) -> Iterator[Dict[str, Any]]:
     
         if not files:
@@ -494,7 +350,7 @@ class CodeBaseProcessor:
                 with Pool(processes=num_processes) as pool:
                     fragment_lists = pool.map(self._process_single_file, batch)
                     
-                # Update cache and yield fragments as they're processed
+                # Yield fragments as they're processed
                 for fragments in  fragment_lists:
                 
                     for fragment in fragments:
@@ -522,58 +378,6 @@ class CodeBaseProcessor:
         for frag_key, frag in enumerate(all_fragments):
             frag['id'] = frag_key
 
-    def update_cache(self, file_path: Path, fragments: List[Dict[str, Any]]) -> None:
-        """Update the cache with new file fragments.
-        
-        Args:
-            file_path: Path to the processed file
-            fragments: List of extracted code fragments
-        """
-        try:
-            stat = file_path.stat()
-            self.cache.cache[str(file_path)] = FileCache(
-                mtime=stat.st_mtime,
-                size=stat.st_size,
-                fragments=fragments,
-                hash=hashlib.sha256(file_path.read_bytes()).hexdigest()
-            )
-            self.cache.save_cache()  # Persist cache to disk
-        except Exception as e:
-            typer.echo(f"⚠️ Cache update failed for {file_path}: {e}")
-            
-    def check_cache(self, file_path: Path) -> Optional[List[Dict[str, Any]]]:
-        """Check if a file is in the cache and return its fragments if valid.
-        
-        This method:
-        1. Checks if the file exists in the cache
-        2. Validates file metadata (size and mtime) hasn't changed
-        3. Returns cached fragments if valid, None otherwise
-        
-        Args:
-            file_path: Path to the file to check in cache
-            
-        Returns:
-            List of cached fragments if valid cache exists, None otherwise
-        """
-        try:
-            stat = file_path.stat()
-            path_str = str(file_path)
-            
-            # Check if file is in cache and metadata matches
-            if path_str in self.cache.cache:  # Use FileProcessingCache's cache dict
-                cached = self.cache.cache[path_str]
-                if (cached.mtime == stat.st_mtime and 
-                    cached.size == stat.st_size):
-                    self.cache_hits += 1
-                    return cached.fragments
-            
-            self.cache_misses += 1
-            return None
-            
-        except Exception as e:
-            typer.echo(f"⚠️ Cache check failed for {file_path}: {e}")
-            return None
-        
 
     def parse_js(self, code: str) -> Tree:
         """Parse JavaScript code using tree-sitter parser.

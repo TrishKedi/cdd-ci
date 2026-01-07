@@ -15,7 +15,7 @@ from rich.status import Status
 
 from core.utils.helpers import get_index_path
 from config.settings import index_dir
-from core.services import CodeBaseProcessor, SapAiCore, EmbeddingIndex, OpenAIService
+from core.services import CodeBaseProcessor, EmbeddingIndex, OpenAIService
 
 
 class EmbeddingEngine:
@@ -33,7 +33,6 @@ class EmbeddingEngine:
         """
         self.code_base_processor = CodeBaseProcessor()
         self.embedder = EmbeddingIndex()
-        self.sap_ai_core = SapAiCore()
         self.openai = OpenAIService()
         self.console = Console()
 
@@ -252,7 +251,7 @@ class EmbeddingEngine:
         # Generate embeddings for current batch
         status.update(f"[bold cyan]Generating embeddings ...")
 
-        # batch_embeddings = self.sap_ai_core.generate_embeddings(code_blocks)
+      
         blocks = [code_block['processedCode'] for code_block in code_blocks]
         batch_embeddings = self.openai.generate_embeddings(blocks)
 
