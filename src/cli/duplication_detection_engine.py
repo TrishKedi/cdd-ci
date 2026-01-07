@@ -121,6 +121,7 @@ class DuplicationDetectionEngine:
             finally:
                 self.exporter.finalize_json_export()
                 self.repo_manager._clean_up('chunks.jsonl')
+                
         # Execute the async pipeline
         asyncio.run(run_all())
     

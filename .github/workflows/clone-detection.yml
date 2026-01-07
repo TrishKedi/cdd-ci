@@ -39,9 +39,13 @@ jobs:
           echo "Changed files:"
           cat changed_files.txt
 
-      - name: Run script (PR comments with Review Dog)
+      - name: Run script 
         run: |
-            python src/app.py --changed-files changed_files.txt --candidate-repo repos/code-samples-ui | reviewdog -f=rdjson -reporter=github-pr-review -level=warning -filter-mode=nofilter
+          python src/app.py --changed-files changed_files.txt --candidate-repo repos/code-samples-ui
+
+      - name: PR comments with Review Dog
+        run: |
+            cat diagonistics.json | reviewdog -f=rdjson -reporter=github-pr-review -level=warning -filter-mode=nofilter
 
 
 

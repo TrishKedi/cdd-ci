@@ -38,7 +38,7 @@ class Exporter:
         self.console = Console()
         
         # Track export state
-        self.json_file_path: Optional[Path] = None
+        self.json_file_path: Optional[Path] = 'diagonistics.json'
         self.jsonl_file_path: Optional[Path] = None
         self.match_count: int = 0
         self.is_json_initialized: bool = False
