@@ -4,3 +4,5 @@ pydantic
 faiss-cpu
 openai
 pydantic-settings
+typer
+rich
