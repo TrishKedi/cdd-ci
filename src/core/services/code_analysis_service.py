@@ -67,6 +67,7 @@ class CodeAnalyzer:
         """
 
     def get_changed_files(self):
+        print("Get changed files")
         parser = argparse.ArgumentParser()
         parser.add_argument('--changed-files', required=True)
         args = parser.parse_args()
@@ -253,43 +254,47 @@ class CodeAnalyzer:
         # Get list of all JS files and filter them
         return list(directory.rglob("*.js"))
 
-    def extract_code_chuncks(self, query_files:bool=True, batch_size:int = 50, code_dir:str="repos" ) -> Iterator[Dict[str, Any]]:
+    def extract_code_chunks(self, query_files:bool=True, code_dir:str="repos", batch_size:int=50 ) -> Iterator[Dict[str, Any]]:
 
         files = self.get_changed_files()
+        print(f"Files: {files}")
 
         if not query_files:
             files = self.extract_candidate_files(code_dir)
+        
+        
+        if files:
+            
+            valid_files = [
+                Path(file_path) for file_path in files 
+                if file_path  and self.should_process_file(Path(file_path))
+            ]
 
-
-        file_paths = [
-            Path(file) for file in files 
-            if file
-        ]
-        print(f"File paths: {file_paths}")
-        valid_files = [
-            file_path for file_path in file_paths 
-            if self.should_process_file(file_path)
-        ]
-        num_processes = min(cpu_count(), batch_size, len(valid_files))
-        processed_files = 0
-
-        for i in range(0, len(valid_files), batch_size):
-            batch = valid_files[i:i+batch_size]
-
-            with Pool(processes=num_processes) as pool:
-                chunks = pool.map(self._process_single_file, batch)
-
-                print("======CODE CHUNKS====")
-
-                # for chunk in chunks:
+            if valid_files:
+                print(f"File paths: {valid_files}")
+                num_processes = min(cpu_count(), len(valid_files))
+                
+                chunk_size = max(1, (len(valid_files) // num_processes))
+                print(f"chunk_size: {chunk_size}")
+                with Pool(processes=num_processes) as pool:
+                    chunks = pool.imap(self._process_single_file, valid_files, chunksize=50)
                     
-                #     for code_chunk in chunk:
-                #         print(f"\n{code_chunk}\n")
-                #         yield code_chunk
+                 
+                    for chunk in chunks:
+                        # print(len(chunk))
+                        for i in range(0, len(chunk), batch_size):
+                            # print(i)
+                            chunk_batch = chunk[i:i+batch_size]
+                            yield  chunk_batch
+                            # print(f"\n{chunk_batch}\n")
+                        
+                        # for code_chunk in chunk:
+                        #     print(f"\n{code_chunk}\n")
+                        #     # yield code_chunk
 
-                return chunks
+                
 
-            processed_files+=len(batch)
+          
 
     def get_processed_code(self, chunks, all=False) -> List[str]:
 
