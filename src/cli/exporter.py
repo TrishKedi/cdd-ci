@@ -281,7 +281,9 @@ class Exporter:
 
             diagnostics = {
                 "source": {"name": "find-duplicates"},
-                "diagnostics": result
+                "diagnostic": result
             }
+
+            print(diagnostics)
             sys.stdout.write(json.dumps(diagnostics, ensure_ascii=False) + "\n")
             sys.stdout.flush()
