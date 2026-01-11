@@ -109,7 +109,7 @@ class DuplicationDetectionEngine:
                     if chunks and isinstance(chunks, list):
                         search_results = await self.similarity_engine.run_semantic_search(query_embeddings, chunks, candidate_index)
                         # print(search_results)
-                        self.exporter.export_diagonistics(search_results)
+                        self.exporter.stream_diagonistics(search_results)
                         # self.exporter.export_rdjson(search_results)
                     
                 completion_msg = "Code duplication detection complete!"

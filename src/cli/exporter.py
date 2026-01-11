@@ -275,3 +275,13 @@ class Exporter:
     def export_diagonistics(self, search_results):
           with open(self.json_file_path, "w", encoding="utf-8") as f:
             json.dump(search_results, f, indent=2, ensure_ascii=False, default=str)
+
+    def stream_diagonistics(self, search_results):
+        for result in search_results:
+
+            diagnostics = {
+                "source": {"name": "find-duplicates"},
+                "diagnostics": result
+            }
+            sys.stdout.write(json.dumps(diagnostics, ensure_ascii=False) + "\n")
+            sys.stdout.flush()

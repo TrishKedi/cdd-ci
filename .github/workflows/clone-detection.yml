@@ -41,11 +41,10 @@ jobs:
 
       - name: Run script 
         run: |
-          python src/app.py --changed-files changed_files.txt --candidate-repo repos/code-samples-ui
+          python src/app.py --changed-files changed_files.txt --candidate-repo repos/code-samples-ui \
+          | reviewdog -f=rdjsonl -reporter=github-pr-review -level=warning -filter-mode=nofilter
 
-      - name: PR comments with Review Dog
-        run: |
-            cat diagonistics.json | reviewdog -f=rdjson -reporter=github-pr-review -level=warning -filter-mode=nofilter
+
 
 
 
