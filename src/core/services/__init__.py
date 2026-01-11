@@ -1,6 +1,23 @@
-from .code_analysis_service import CodeAnalyzer
+"""Core services for code duplication detection.
+
+This package provides the main service classes for:
+- Code analysis and processing
+- Embedding generation and indexing
+- Similarity lookup and matching
+- AI-powered re-ranking
+- Match processing and formatting
+"""
+
+from .embedding_service import EmbeddingIndex
+from .similarity_lookup_service import SimilarityLookup
+from .code_analysis_service import CodeBaseProcessor
+from .match_processor_service import MatchProcessor
+from .openai_service import OpenAIService
 
 __all__ = [
-    CodeAnalyzer
-
+    "EmbeddingIndex", 
+    "SimilarityLookup", 
+    "CodeBaseProcessor",
+    "MatchProcessor",
+    "OpenAIService"
 ]

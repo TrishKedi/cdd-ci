@@ -2,14 +2,19 @@ name: Detect clones
 
 on:
   pull_request:
-    types: [opened, synchronized, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   clone-detection:
     runs-on: ubuntu-latest
+    environment: main
+    env: 
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: checkout
@@ -19,14 +24,30 @@ jobs:
 
       - name: Install python
         uses: actions/setup-python@v5
+
+      - name: Setup Review Dog
+        uses: reviewdog/action-setup@v1
         
       - name: Install dependencies
         run: |
-          if [ -f requirementx.txt ]; pip install -r requirements.txt; fi
-          
-      - name: Run script
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Get changed files
         run: |
-          python src/app.py
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- '*.js' > changed_files.txt
+          echo "Changed files:"
+          cat changed_files.txt
+
+      - name: Run script 
+        run: |
+          python src/app.py --changed-files changed_files.txt --candidate-repo repos/code-samples-ui \
+          | reviewdog -f=rdjsonl -reporter=github-pr-review -level=warning -filter-mode=nofilter
+
+
+
+
+
 
 
 
