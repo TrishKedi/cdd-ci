@@ -158,8 +158,7 @@ class MatchProcessor:
         return matches
 
     def replace_candidates(self, search_results):
-        print(search_results[0])
-        print(search_results[0][0])
+ 
         # print(search_results[0][0].index(30))
 
         new_cand = []

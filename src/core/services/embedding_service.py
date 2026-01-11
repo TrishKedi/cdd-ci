@@ -27,8 +27,8 @@ class EmbeddingIndex:
         self.is_setup = False
 
     def get_index(self):
-        print("returning index")
-        print(self.index)
+        # print("returning index")
+        # print(self.index)
         return self.index
 
     def add_embeddings(self, embeddings: np.ndarray) -> None:

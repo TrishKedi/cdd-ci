@@ -82,7 +82,7 @@ class RepositoryManager:
         directory = Path(code_dir)
         
         if not directory.exists() or not directory.is_dir():
-            print(f"❌ {directory} is not a valid directory.")
+            # print(f"❌ {directory} is not a valid directory.")
             # raise typer.Exit(code=1)
             return
 
@@ -90,8 +90,8 @@ class RepositoryManager:
         return list(directory.rglob("*.js"))
 
     def get_changed_files(self, changed_files_path):
-        print("Get changed files")
-        print(changed_files_path)
+        # print("Get changed files")
+        # print(changed_files_path)
         files = [
             "repos/code-samples-ui/Cart.controller.js",
             "repos/code-samples-ui/Category.controller.js",

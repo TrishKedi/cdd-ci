@@ -283,7 +283,7 @@ class CodeBaseProcessor:
         return self.code_blocks
 
     def get_changed_files(self):
-        print("Get changed files")
+  
         parser = argparse.ArgumentParser()
         parser.add_argument('--changed-files', required=True)
         args = parser.parse_args()
@@ -310,14 +310,14 @@ class CodeBaseProcessor:
        
             return fragments
         except Exception as e:
-            typer.echo(f"⚠️ Skipping {file_path}: {e}")
+            # typer.echo(f"⚠️ Skipping {file_path}: {e}")
             return []
 
     def extract_candidate_files(self, code_dir:str)->List[Path]:
         directory = Path(code_dir)
         
         if not directory.exists() or not directory.is_dir():
-            print(f"❌ {directory} is not a valid directory.")
+            # print(f"❌ {directory} is not a valid directory.")
             # raise typer.Exit(code=1)
             return
 
@@ -339,12 +339,12 @@ class CodeBaseProcessor:
             total_files = len(valid_files)
             processed_files = 0
             
-            typer.echo(f"Processing {total_files} files")
+            # typer.echo(f"Processing {total_files} files")
 
             # Process remaining files in batches
             for i in range(0, len(valid_files), batch_size):
                 batch = valid_files[i:i + batch_size]
-                typer.echo(f"\nProcessing batch {(i//batch_size) + 1} ({len(batch)} files)")
+                # typer.echo(f"\nProcessing batch {(i//batch_size) + 1} ({len(batch)} files)")
                 
                 # Process batch in parallel
                 with Pool(processes=num_processes) as pool:
@@ -365,7 +365,7 @@ class CodeBaseProcessor:
                         yield fragment
                         
                 processed_files += len(batch)
-                typer.echo(f"Progress: {processed_files}/{total_files} files processed")
+                # typer.echo(f"Progress: {processed_files}/{total_files} files processed")
 
                
 
@@ -419,7 +419,7 @@ class CodeBaseProcessor:
             return True
             
         except Exception as e:
-            typer.echo(f"⚠️ Error checking file {file_path}: {e}")
+            # typer.echo(f"⚠️ Error checking file {file_path}: {e}")
             return False
             
     def _passes_exclude_patterns(self, file_path: Path) -> bool:

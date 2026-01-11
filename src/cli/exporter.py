@@ -38,7 +38,7 @@ class Exporter:
         self.console = Console()
         
         # Track export state
-        self.json_file_path: Optional[Path] = Path('diagonistics.json')
+        self.json_file_path: Optional[Path] =  self.export_dir / "diagnostics.json"
         self.jsonl_file_path: Optional[Path] = None
         self.match_count: int = 0
         self.is_json_initialized: bool = False
@@ -81,7 +81,7 @@ class Exporter:
             
         except (OSError, PermissionError) as e:
             # Fallback to current directory if Downloads not writable
-            self.console.print(f"[yellow]Warning: Cannot write to {self.export_dir}, using current directory[/yellow]")
+            # self.console.print(f"[yellow]Warning: Cannot write to {self.export_dir}, using current directory[/yellow]")
             self.export_dir = Path.cwd() / "exports"
             self.export_dir.mkdir(exist_ok=True)
 
@@ -116,18 +116,17 @@ class Exporter:
         This should be called once before any export_json calls.
         """
         if not self.is_json_initialized:
-            # Generate filename in Downloads directory
-            filename = self._generate_filename("matches", "json")
-            # self.json_file_path = self.export_dir / filename
             
             with open(self.json_file_path, "w", encoding="utf-8") as f:
-                f.write("[\n")
+                header = '''{"source": {"name": "find-duplicates"}\n
+                "duplicates": [
+                \n
+                '''
+                f.write(header)
             
             self.is_json_initialized = True
             
-            if self.verbose:
-                self.console.print(f"[dim]Initialized JSON export: {self.json_file_path}[/dim]")
-
+       
     def export_json(self, matches: Dict[str, Any]) -> None:
         """Append match results to JSON array file.
         
@@ -143,6 +142,7 @@ class Exporter:
         with open(self.json_file_path, "a", encoding="utf-8") as f:
             f.write(prefix)
             json.dump(matches, f, indent=2, ensure_ascii=False, default=str)
+            self.match_count += 1
 
     def finalize_json_export(self) -> None:
         """Close the JSON array export file with closing bracket.
@@ -151,7 +151,7 @@ class Exporter:
         """
         if self.is_json_initialized and self.json_file_path:
             with open(self.json_file_path, "a", encoding="utf-8") as f:
-                f.write("\n]")
+                f.write("\n]\n}")
             
             self._notify_export_success(self.json_file_path, "JSON")
 
@@ -166,8 +166,7 @@ class Exporter:
             filename = self._generate_filename("duplicate_matches", "jsonl")
             self.jsonl_file_path = self.export_dir / filename
             
-            if self.verbose:
-                self.console.print(f"[dim]Initialized JSONL export: {self.jsonl_file_path}[/dim]")
+         
 
         with open(self.jsonl_file_path, "a", encoding="utf-8") as f:
             json.dump(matches, f, separators=(',', ':'), ensure_ascii=False, default=str)
@@ -195,12 +194,6 @@ class Exporter:
         if self.jsonl_file_path:
             self._notify_export_success(self.jsonl_file_path, "JSONL")
         
-        # Summary message
-        if self.match_count > 0:
-            
-            self.console.print("[bold green] Successfully exported matches [/bold green]")
-        else:
-            self.console.print("[yellow]No matches to export[/yellow]")
 
     def _notify_export_success(self, file_path: Path, format_type: str) -> None:
         """Notify user of successful export and optionally open file.
@@ -213,15 +206,12 @@ class Exporter:
         if file_path.exists():
             file_size = self._format_file_size(file_path.stat().st_size)
             
-            # Display success message with clickable path
-            self.console.print(f"[green]✓ Exported {format_type} file ({file_size})[/green]")
+  
             
             # Create clickable file path for supported terminals
             clickable_path = f"[link=file://{file_path.resolve()}]{file_path}[/link]"
-            self.console.print(f"[cyan] Location: {clickable_path}[/cyan]")
-            
-            if self.verbose:
-                self.console.print(f"[dim]Full path: {file_path.resolve()}[/dim]")
+            # self.console.print(f"[cyan] Location: {clickable_path}[/cyan]")
+           
             
             # Auto-open file if requested
             if self.auto_open:
@@ -257,8 +247,9 @@ class Exporter:
                 subprocess.run(["xdg-open", str(file_path)], check=True)
                             
         except (subprocess.SubprocessError, OSError, AttributeError) as e:
-            self.console.print(f"[yellow]Could not auto-open file: {e}[/yellow]")
-            self.console.print(f"[dim]You can manually open: {file_path}[/dim]")
+            pass
+            # self.console.print(f"[yellow]Could not auto-open file: {e}[/yellow]")
+            # self.console.print(f"[dim]You can manually open: {file_path}[/dim]")
 
     def cleanup(self) -> None:
         """Clean up any temporary resources if needed."""
@@ -284,6 +275,6 @@ class Exporter:
                 "diagnostic": result
             }
 
-            print(diagnostics)
+
             sys.stdout.write(json.dumps(diagnostics, ensure_ascii=False) + "\n")
             sys.stdout.flush()

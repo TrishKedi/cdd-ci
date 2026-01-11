@@ -187,22 +187,18 @@ class SimilarityEngine:
         # Initialize deduplication tracking across all index pairs
         unique_matches: Set[str] = set()
         
-        # Log workflow initiation
-        self.console.print("Started similarity lookup...", style="bold blue")
+
         logger.info("Starting exhaustive similarity lookup workflow")
-        
-        # Display configuration information for user awareness
-        if self.similarity_threshold != default_similarity_threshold:
-            self.console.print(f"Using custom similarity threshold: {self.similarity_threshold}", style="yellow")
+ 
         # Initialize export infrastructure if file output is enabled
         if self.export:
-            self.console.print("Initializing export files...", style="dim")
+       
             try:
                 self.exporter.initialize_export()
                 logger.info("Export files initialized successfully")
             except Exception as e:
                 logger.error(f"Failed to initialize export files: {e}")
-                self.console.print(f" Export initialization failed: {e}", style="red")
+        
                 # Continue without export rather than failing completely
                 self.export = False
 
@@ -210,15 +206,12 @@ class SimilarityEngine:
             # Choose processing mode based on accuracy vs speed requirements
             if self.rerank:
                 # Use batched processing for LLM re-ranking (slower but more accurate)
-                self.console.print(" Using LLM re-ranking...", style="yellow")
+        
                 logger.info("Starting batched processing with LLM re-ranking")
                 await self.run_exhaustive_similarity_lookup_batched(unique_matches, batch_size=10)
             else:
                 # Use fast streaming mode for immediate results (faster but less accurate)
-                self.console.print(
-                    "Using fast streaming mode (no LLM re-ranking)...", 
-                    style="green"
-                )
+            
                 logger.info("Starting streaming processing without LLM re-ranking")
                 await self.run_exhaustive_similarity_lookup_streaming(unique_matches)
         except Exception as e:
@@ -227,7 +220,7 @@ class SimilarityEngine:
         finally:
             # Ensure export cleanup happens even if processing fails
             if self.export:
-                self.console.print("Finalizing export files...", style="dim")
+           
                 self.exporter.finalize_export()
                 logger.info("Export files finalized")
 
@@ -299,10 +292,7 @@ class SimilarityEngine:
                         self.exporter.export(matches)
                         
         # Display completion summary with final statistics
-        self.console.print(
-            f"✅ Completed similarity search: {total_processed} blocks processed, {matches_found} matches found", 
-            style="green"
-        )
+     
         logger.info(f"Streaming similarity search completed: {total_processed} blocks, {matches_found} matches")
 
 
@@ -384,10 +374,7 @@ class SimilarityEngine:
                 batches_processed += 1
                 
         # Display completion summary with batch processing statistics
-        self.console.print(
-            f"✅ Completed similarity search: {total_processed} blocks processed, {total_matches} total matches with LLM re-ranking", 
-            style="green"
-        )
+  
         logger.info(f"Batched similarity search completed: {total_processed} blocks, {batches_processed} batches, {total_matches} matches")
 
     async def rerank_batch(self, matches_batch: List[Dict[str, Any]]) -> None:

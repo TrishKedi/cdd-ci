@@ -70,11 +70,11 @@ class DuplicationDetectionEngine:
         3. Similarity search and duplicate detection
         """
         async def run_all() -> None:
-            self.console.print("Starting code duplication detection...", style="bold blue")
+            # self.console.print("Starting code duplication detection...", style="bold blue")
             
             # Step 1: Prepare and validate code locations
             all_code_locations = self.repo_manager._prepare_code_locations(self.candidate_repo, self.changed_files)
-            print(all_code_locations)
+            # print(all_code_locations)
             if all_code_locations is None:
                 return  # Error already displayed by _prepare_code_locations
                 
@@ -100,7 +100,7 @@ class DuplicationDetectionEngine:
                 changed_files = self.repo_manager.get_changed_files(all_code_locations.get('changed_files'))
                 # print(changed_files)
                 candidate_index = self.embedding_engine.get_candidate_index()
-                print(candidate_index)
+                # print(candidate_index)
                
                 async for query_embeddings, chunks in self.embedding_engine.stream_query_embeddings(changed_files):
                     # print(f"\n{query_embeddings}\n")
@@ -113,13 +113,14 @@ class DuplicationDetectionEngine:
                         # self.exporter.export_rdjson(search_results)
                     
                 completion_msg = "Code duplication detection complete!"
-                self.console.print(f"\n{completion_msg}", style="bold green")
+                # self.console.print(f"\n{completion_msg}", style="bold green")
 
             except Exception as e:
-                self.console.print(f"Failed to index: {e}")
+                pass
+                # self.console.print(f"Failed to index: {e}")
 
             finally:
-                self.exporter.finalize_json_export()
+                # self.exporter.finalize_json_export()
                 self.repo_manager._clean_up('chunks.jsonl')
                 
         # Execute the async pipeline
