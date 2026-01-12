@@ -104,8 +104,8 @@ class DuplicationDetectionEngine:
                 print(candidate_index)
                
                 async for query_embeddings, chunks in self.embedding_engine.stream_query_embeddings(changed_files):
-                    # print(f"\n{query_embeddings}\n")
-                    # print(f"\n{chunks}\n")
+                    print(f"\n{query_embeddings}\n")
+                    print(f"\n{chunks}\n")
 
                     if chunks and isinstance(chunks, list):
                         search_results = await self.similarity_engine.run_semantic_search(query_embeddings, chunks, candidate_index)
