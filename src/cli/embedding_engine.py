@@ -73,16 +73,16 @@ class EmbeddingEngine:
       
         # Build new index for this repository
         status.update(f"[bold yellow]Building candidate index...")
-        # self.console.print(f"\n  Building new candidate index...", style="yellow")
+        self.console.print(f"\n  Building new candidate index...", style="yellow")
 
         # Generate embeddings and build index
        
         await self.embed_code_blocks_in_batches(candidate_files, is_query=False)
         
-        # self.console.print(f"Index built for candidate repo", style="green")
+        self.console.print(f"Index built for candidate repo", style="green")
 
         # Display completion summary
-        # self.console.print( f"Embedding complete! ", style="green" )
+        self.console.print( f"Embedding complete! ", style="green" )
         
 
     async def embed_code_blocks_in_batches(
@@ -159,10 +159,10 @@ class EmbeddingEngine:
                 )
 
           
-            # self.console.print(
-            #     f'Completed indexing {total_blocks} code blocks for candidate repo', 
-            #     style="green"
-            # )
+            self.console.print(
+                f'Completed indexing {total_blocks} code blocks for candidate repo', 
+                style="green"
+            )
         
     async def stream_query_embeddings(
         self, 

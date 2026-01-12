@@ -88,6 +88,7 @@ class DuplicationDetectionEngine:
                     # Generate embeddings and build FAISS indexes
                     candidate_repo = all_code_locations.get('candidate_repo')
                     candidate_files = self.repo_manager.extract_candidate_files(candidate_repo)
+                    print(candidate_files)
                     await self.embedding_engine.embed_candidate_corpus(candidate_files, status)
                         
                 # # Step 4: Run similarity search (unless embed-only mode)
@@ -98,9 +99,9 @@ class DuplicationDetectionEngine:
                 # Step 5: Display completion status
                 
                 changed_files = self.repo_manager.get_changed_files(all_code_locations.get('changed_files'))
-                # print(changed_files)
+                print(changed_files)
                 candidate_index = self.embedding_engine.get_candidate_index()
-                # print(candidate_index)
+                print(candidate_index)
                
                 async for query_embeddings, chunks in self.embedding_engine.stream_query_embeddings(changed_files):
                     # print(f"\n{query_embeddings}\n")
@@ -109,15 +110,15 @@ class DuplicationDetectionEngine:
                     if chunks and isinstance(chunks, list):
                         search_results = await self.similarity_engine.run_semantic_search(query_embeddings, chunks, candidate_index)
                         # print(search_results)
-                        self.exporter.stream_diagonistics(search_results)
-                        # self.exporter.export_rdjson(search_results)
+                        # self.exporter.stream_diagonistics(search_results)
+                        self.exporter.export_diagonistics(search_results)
                     
                 completion_msg = "Code duplication detection complete!"
-                # self.console.print(f"\n{completion_msg}", style="bold green")
+                self.console.print(f"\n{completion_msg}", style="bold green")
 
             except Exception as e:
                 pass
-                # self.console.print(f"Failed to index: {e}")
+                self.console.print(f"Failed to index: {e}")
 
             finally:
                 # self.exporter.finalize_json_export()

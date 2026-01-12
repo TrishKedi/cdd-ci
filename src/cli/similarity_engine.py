@@ -142,7 +142,7 @@ class SimilarityEngine:
             for i, chunk in enumerate(chunks)
         ]
 
-        return diagnostics
+        # return diagnostics
 
         return {
             "source": {"name": "find-duplicates"},
