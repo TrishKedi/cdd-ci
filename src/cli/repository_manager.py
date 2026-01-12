@@ -92,20 +92,23 @@ class RepositoryManager:
     def get_changed_files(self, changed_files_path):
         # print("Get changed files")
         # print(changed_files_path)
-        files = [
-            "../ui5-code-samples/code-samples-ui/Cart.controller.js",
-            "../ui5-code-samples/code-samples-ui/Category.controller.js",
-            "../ui5-code-samples/code-samples-ui/Checkout.controller.js"
-        ]
+        # files = [
+        #     "../ui5-code-samples/code-samples-ui/Cart.controller.js",
+        #     "../ui5-code-samples/code-samples-ui/Category.controller.js",
+        #     "../ui5-code-samples/code-samples-ui/Checkout.controller.js"
+        # ]
 
-        return [Path(file) for file in files]
-      
-        # with open('changed-files.txt', 'r', encoding='utf-8') as f:
-        #     files = f.read()
-        #     changed_files = [Path(file) for file in files.splitlines('\n')]
-        #     print(changed_files)
+        # return [Path(file) for file in files]
 
-        #     return changed_files
+        print(changed_files_path)
+        with open(changed_files_path, 'r', encoding='utf-8') as f:
+            files = f.read()
+            print(files)
+            print(files.split('\n'))
+            changed_files = [Path(file) for file in files.split('\n')]
+            print(changed_files)
+
+            return changed_files
 
     def _clean_up(self, path) -> None:
         if os.path.exists(path):

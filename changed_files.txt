@@ -1,0 +1,3 @@
+../ui5-code-samples/code-samples-ui/Cart.controller.js
+../ui5-code-samples/code-samples-ui/Category.controller.js
+../ui5-code-samples/code-samples-ui/Checkout.controller.js
