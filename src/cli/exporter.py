@@ -264,6 +264,7 @@ class Exporter:
         sys.stdout.write("\n")
 
     def export_diagonistics(self, search_results):
+        print(f"Export Path: {self.json_file_path}")
           with open(self.json_file_path, "w", encoding="utf-8") as f:
             json.dump(search_results, f, indent=2, ensure_ascii=False, default=str)
 
