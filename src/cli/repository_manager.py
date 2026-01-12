@@ -104,8 +104,8 @@ class RepositoryManager:
         with open(changed_files_path, 'r', encoding='utf-8') as f:
             files = f.read()
             print(files)
-            print(files.split('\n'))
-            changed_files = [Path(file) for file in files.split('\n')]
+            print(files.splitlines())
+            changed_files = [Path(file) for file in files.splitlines()]
             print(changed_files)
 
             return changed_files
