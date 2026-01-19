@@ -6,6 +6,7 @@ code duplication matches using Rich library components.
 
 import subprocess
 import sys
+import logging
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from rich.console import Console
@@ -13,6 +14,8 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.syntax import Syntax
 from rich.text import Text
+
+logger = logging.getLogger(__name__)
 
 
 class Visualizer:
@@ -142,8 +145,8 @@ class Visualizer:
             
         except (subprocess.SubprocessError, FileNotFoundError) as e:
             # If less fails, fallback to direct output
-            print(content, file=sys.stdout)
-            raise e
+            sys.stdout.write(content)
+            logger.error(f"Failed to pipe to less: {e}")
 
     def print_matches(self, matches: Dict[str, Any]) -> None:
         """Print formatted duplicate matches with Rich console output.

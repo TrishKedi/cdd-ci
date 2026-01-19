@@ -159,8 +159,6 @@ class MatchProcessor:
 
     def replace_candidates(self, search_results):
  
-        # print(search_results[0][0].index(30))
-
         new_cand = []
 
         def transform_candidates(line, search_result):
@@ -179,12 +177,8 @@ class MatchProcessor:
         with open('chunks.jsonl', 'r') as f:
             for line in f:
                 cand_dets = json.loads(line)
-                # print("=====LINE=====")
-                # print(line)
                 
                 new_cand = list(map(lambda cands: transform_candidates(cand_dets, cands), search_results))
-                # print(new_cand)
-                # print(len(new_cand))
 
         return new_cand
 

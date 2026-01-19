@@ -44,10 +44,6 @@ class SimilarityLookup:
         """
         similarity_scores, neighbours = faiss_index.search(query_embeddings, k=1)
         search_results = list(zip(neighbours.tolist(), similarity_scores.tolist()))
-        
-        # print(type(similarity_scores), type(neighbours))
-        # print(len(similarity_scores))
-        # print(similarity_scores.tolist())
 
         
         return search_results

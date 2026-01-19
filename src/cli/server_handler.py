@@ -5,10 +5,12 @@ and streaming real-time results to connected clients.
 """
 
 import time
+import logging
 from typing import Optional
 from threading import Thread
-from rich.console import Console
 from web.server import stream_completion_to_web, initialize_web_server, start_web_server
+
+logger = logging.getLogger(__name__)
 
 
 class ServerHandler:
@@ -37,7 +39,6 @@ class ServerHandler:
         self.verbose = verbose
         self.reasoning = reasoning
         self.auto_open = auto_open
-        self.console = Console()
 
     def start_server(self) -> Thread:
         """Initialize and start the web server in a separate thread.
@@ -52,10 +53,7 @@ class ServerHandler:
         server_thread = start_web_server(self.auto_open)
         
         # Display success message
-        self.console.print(
-            f" Web server started at http://localhost:{self.port}", 
-            style="bold green"
-        )
+        logger.info(f"Web server started at http://localhost:{self.port}")
         
         return server_thread
 
@@ -74,7 +72,7 @@ class ServerHandler:
             await stream_completion_to_web()
             
             # Display instructions to user
-            self.console.print("Press Ctrl+C to stop the web server", style="dim")
+            logger.info("Press Ctrl+C to stop the web server")
             
             try:
                 # Keep server alive until interrupted
@@ -82,4 +80,4 @@ class ServerHandler:
                     time.sleep(1)  # Check server status every second
             except KeyboardInterrupt:
                 # Handle graceful shutdown
-                self.console.print("\n Web server stopped", style="yellow")
+                logger.info("Web server stopped")

@@ -7,15 +7,16 @@ indexes for efficient similarity search.
 
 import os
 import faiss
+import logging
 import numpy as np
 from pathlib import Path
 from typing import Dict, List, Tuple, Any, Optional
-from rich.console import Console
-from rich.status import Status
 
 from core.utils.helpers import get_index_path
 from config.settings import index_dir
 from core.services import CodeBaseProcessor, EmbeddingIndex, OpenAIService
+
+logger = logging.getLogger(__name__)
 
 
 class EmbeddingEngine:
@@ -34,7 +35,6 @@ class EmbeddingEngine:
         self.code_base_processor = CodeBaseProcessor()
         self.embedder = EmbeddingIndex()
         self.openai = OpenAIService()
-        self.console = Console()
 
 
     def get_candidate_index(self) -> faiss.Index:
@@ -56,7 +56,7 @@ class EmbeddingEngine:
     async def embed_candidate_corpus(
         self, 
         candidate_files: str, 
-        status: Status
+        status: Optional[Any]
     ) -> Dict[str, str]:
         """Process all repositories and create FAISS indexes.
         
@@ -72,17 +72,16 @@ class EmbeddingEngine:
         """
       
         # Build new index for this repository
-        status.update(f"[bold yellow]Building candidate index...")
-        self.console.print(f"\n  Building new candidate index...", style="yellow")
+        logger.info("Building candidate index...")
 
         # Generate embeddings and build index
        
         await self.embed_code_blocks_in_batches(candidate_files, is_query=False)
         
-        self.console.print(f"Index built for candidate repo", style="green")
+        logger.info("Index built for candidate repo")
 
         # Display completion summary
-        self.console.print( f"Embedding complete! ", style="green" )
+        logger.info("Embedding complete!")
         
 
     async def embed_code_blocks_in_batches(
@@ -117,52 +116,40 @@ class EmbeddingEngine:
         
         
         # Process code blocks with progress tracking
-        with self.console.status(
-            f"[bold yellow]Extracting code blocks from candidate repo...", 
-            spinner="dots"
-        ) as status:
-            # Extract and process code blocks in batches
-            for code_chunk in self.code_base_processor.extract_code_chunks(files, is_candidate = (not is_query), batch_size=batch_size):
-                batch.append(code_chunk)
-                
-                total_blocks += 1
-                # print(f"CODE CHUNKS NUMBER: {total_blocks}")
-                # print(f"\n CODE CHUNKS: {code_chunks} \n")
-                
-                
-                # Update progress periodically
-                if total_blocks % 10 == 0:
-                    status.update(
-                        f"[bold yellow]Extracted {total_blocks} code blocks from candidate repo..."
-                    )
-                
-                if len(batch) >= batch_size:
-                 
-                    #Process complete batches
-                    embeddings = await self._process_batch(
-                        batch, 
-                        status,
-                        total_blocks,
-                        is_query=is_query
-                    )
-
-                    batch = []
-
-
-            if batch:
-                #Process remaining batch
+        logger.info("Extracting code blocks from candidate repo...")
+        
+        # Extract and process code blocks in batches
+        for code_chunk in self.code_base_processor.extract_code_chunks(files, is_candidate = (not is_query), batch_size=batch_size):
+            batch.append(code_chunk)
+            
+            total_blocks += 1
+            
+            # Update progress periodically
+            if total_blocks % 10 == 0:
+                logger.debug(f"Extracted {total_blocks} code blocks from candidate repo...")
+            
+            if len(batch) >= batch_size:
+             
+                #Process complete batches
                 embeddings = await self._process_batch(
                     batch, 
-                    status,
                     total_blocks,
                     is_query=is_query
                 )
 
-          
-            self.console.print(
-                f'Completed indexing {total_blocks} code blocks for candidate repo', 
-                style="green"
+                batch = []
+
+
+        if batch:
+            #Process remaining batch
+            embeddings = await self._process_batch(
+                batch, 
+                total_blocks,
+                is_query=is_query
             )
+
+      
+        logger.info(f'Completed indexing {total_blocks} code blocks for candidate repo')
         
     async def stream_query_embeddings(
         self, 
@@ -190,50 +177,43 @@ class EmbeddingEngine:
         batch = []
            
         # Process code blocks with progress tracking
-        with self.console.status(
-            f"[bold yellow]Extracting code blocks from candidate repo...", 
-            spinner="dots"
-        ) as status:
-            # Extract and process code blocks in batches
-            for code_chunk in self.code_base_processor.extract_code_chunks(files, is_candidate = False, batch_size=batch_size):
-                batch.append(code_chunk)
-                
-                total_blocks += 1
-                
-                # Update progress periodically
-                if total_blocks % 10 == 0:
-                    status.update(
-                        f"[bold yellow]Extracted {total_blocks} code blocks from candidate repo..."
-                    )
-                
-                if len(batch) >= batch_size:
-                 
-                    #Process complete batches
-                    embeddings = await self._process_batch(
-                        batch, 
-                        status,
-                        total_blocks,
-                        is_query=True
-                    )
-
-                    batch = []
-                    yield embeddings, batch
-
-            if batch:
-                #Process remaining batch
+        logger.info("Extracting code blocks for query...")
+        
+        # Extract and process code blocks in batches
+        for code_chunk in self.code_base_processor.extract_code_chunks(files, is_candidate = False, batch_size=batch_size):
+            batch.append(code_chunk)
+            
+            total_blocks += 1
+            
+            # Update progress periodically
+            if total_blocks % 10 == 0:
+                logger.debug(f"Extracted {total_blocks} code blocks...")
+            
+            if len(batch) >= batch_size:
+             
+                #Process complete batches
                 embeddings = await self._process_batch(
                     batch, 
-                    status,
                     total_blocks,
                     is_query=True
                 )
 
+                batch = []
                 yield embeddings, batch
+
+        if batch:
+            #Process remaining batch
+            embeddings = await self._process_batch(
+                batch, 
+                total_blocks,
+                is_query=True
+            )
+
+            yield embeddings, batch
                    
     async def _process_batch(
         self,
         code_blocks: List[Any],
-        status: Status,
         total_blocks: int,
         is_query: bool
         
@@ -249,7 +229,7 @@ class EmbeddingEngine:
         """
         
         # Generate embeddings for current batch
-        status.update(f"[bold cyan]Generating embeddings ...")
+        logger.debug("Generating embeddings...")
 
       
         blocks = [code_block['processedCode'] for code_block in code_blocks]
@@ -259,12 +239,5 @@ class EmbeddingEngine:
             return batch_embeddings
         
         # Store embeddings in FAISS index
-        status.update("[bold cyan]Storing embeddings to FAISS index...")
+        logger.debug("Storing embeddings to FAISS index...")
         self.embedder.add_embeddings(batch_embeddings)
-        
-        # Update database with batch information
-        # await finalize_index_build(code_blocks, code_directory, index_registry_id)
-        
-        # Log batch completion
-        # batch_msg = f"final batch: {len(code_blocks)} blocks" if is_final else f"blocks (Total: {total_blocks})"
-        # self.console.print(f'📦 Processed {batch_msg}', style="dim")

@@ -11,6 +11,7 @@ This module provides comprehensive code analysis capabilities including:
 import fnmatch
 import hashlib
 import json
+import logging
 import os
 import re
 import subprocess
@@ -24,9 +25,10 @@ from multiprocessing import Pool, cpu_count
 from pathlib import Path
 from typing import Dict, Any, Tuple, List, Optional, Set, Iterator
 import numpy as np
-import typer
 from tree_sitter import Language, Parser, Query, Tree, Node
 import tree_sitter_javascript as tsjs
+
+logger = logging.getLogger(__name__)
 
 # Default patterns for files to exclude
 DEFAULT_EXCLUDE_PATTERNS = {
@@ -310,16 +312,14 @@ class CodeBaseProcessor:
        
             return fragments
         except Exception as e:
-            # typer.echo(f"⚠️ Skipping {file_path}: {e}")
+            logger.warning(f"Skipping {file_path}: {e}")
             return []
 
     def extract_candidate_files(self, code_dir:str)->List[Path]:
         directory = Path(code_dir)
         
         if not directory.exists() or not directory.is_dir():
-            # print(f"❌ {directory} is not a valid directory.")
-            # raise typer.Exit(code=1)
-            return
+            return None
 
         # Get list of all JS files and filter them
         return list(directory.rglob("*.js"))
@@ -339,12 +339,12 @@ class CodeBaseProcessor:
             total_files = len(valid_files)
             processed_files = 0
             
-            # typer.echo(f"Processing {total_files} files")
+            logger.info(f"Processing {total_files} files")
 
             # Process remaining files in batches
             for i in range(0, len(valid_files), batch_size):
                 batch = valid_files[i:i + batch_size]
-                # typer.echo(f"\nProcessing batch {(i//batch_size) + 1} ({len(batch)} files)")
+                logger.info(f"Processing batch {(i//batch_size) + 1} ({len(batch)} files)")
                 
                 # Process batch in parallel
                 with Pool(processes=num_processes) as pool:
@@ -365,7 +365,7 @@ class CodeBaseProcessor:
                         yield fragment
                         
                 processed_files += len(batch)
-                # typer.echo(f"Progress: {processed_files}/{total_files} files processed")
+                logger.debug(f"Progress: {processed_files}/{total_files} files processed")
 
                
 
@@ -419,7 +419,7 @@ class CodeBaseProcessor:
             return True
             
         except Exception as e:
-            # typer.echo(f"⚠️ Error checking file {file_path}: {e}")
+            logger.warning(f"Error checking file {file_path}: {e}")
             return False
             
     def _passes_exclude_patterns(self, file_path: Path) -> bool:

@@ -6,9 +6,8 @@ repository management, embedding generation, and similarity search.
 
 import os
 import asyncio
+import logging
 from typing import Dict, List, Optional, Any
-from rich.console import Console
-from rich.status import Status
 
 from .repository_manager import RepositoryManager
 from .exporter import Exporter
@@ -16,6 +15,8 @@ from .exporter import Exporter
 from .embedding_engine import EmbeddingEngine
 from .similarity_engine import SimilarityEngine
 from config.settings import index_dir
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -57,7 +58,6 @@ class DuplicationDetectionEngine:
             rerank=self.rerank,
             reasoning=self.reasoning
         )
-        self.console = Console()
 
 
 
@@ -70,55 +70,45 @@ class DuplicationDetectionEngine:
         3. Similarity search and duplicate detection
         """
         async def run_all() -> None:
-            # self.console.print("Starting code duplication detection...", style="bold blue")
+            logger.info("Starting code duplication detection...")
             
             # Step 1: Prepare and validate code locations
             all_code_locations = self.repo_manager._prepare_code_locations(self.candidate_repo, self.changed_files)
-            # print(all_code_locations)
             if all_code_locations is None:
                 return  # Error already displayed by _prepare_code_locations
                 
             try:
                 # Step 3: Initialize and build indexes
-                with self.console.status("[bold green]Initializing indexes...", spinner="dots") as status:
-                    # Rebuild indexes if requested
-                
-                    status.update("[bold green]Loading repositories...")
+                logger.info("Initializing indexes...")
 
-                    # Generate embeddings and build FAISS indexes
-                    candidate_repo = all_code_locations.get('candidate_repo')
-                    candidate_files = self.repo_manager.extract_candidate_files(candidate_repo)
-                    print(candidate_files)
-                    await self.embedding_engine.embed_candidate_corpus(candidate_files, status)
+                # Generate embeddings and build FAISS indexes
+                candidate_repo = all_code_locations.get('candidate_repo')
+                candidate_files = self.repo_manager.extract_candidate_files(candidate_repo)
+                logger.debug(f"Candidate files: {candidate_files}")
+                await self.embedding_engine.embed_candidate_corpus(candidate_files, None)
                         
-                # # Step 4: Run similarity search (unless embed-only mode)
-                # if not self.embed_only:
-                #     self.console.print(f"Started exhaustive similarity search across {len(index_path_id_map)} repositories...", style="bold blue")
-                #     await self.start_semantic_search(index_path_id_map)
-                
-                # Step 5: Display completion status
+                # Step 5: Get and process results
                 
                 changed_files = self.repo_manager.get_changed_files(all_code_locations.get('changed_files'))
-                print(changed_files)
+                logger.debug(f"Changed files: {changed_files}")
                 candidate_index = self.embedding_engine.get_candidate_index()
-                print(candidate_index)
+                logger.debug(f"Candidate index loaded")
                
                 async for query_embeddings, chunks in self.embedding_engine.stream_query_embeddings(changed_files):
-                    print(f"\n{query_embeddings}\n")
-                    print(f"\n{chunks}\n")
+                    logger.debug(f"Query embeddings: {len(query_embeddings)} dimensions")
+                    logger.debug(f"Chunks: {len(chunks)} blocks")
 
                     if chunks and isinstance(chunks, list):
                         search_results = await self.similarity_engine.run_semantic_search(query_embeddings, chunks, candidate_index)
-                        print(search_results)
+                        logger.debug(f"Search results: {len(search_results)} matches")
                         # self.exporter.stream_diagonistics(search_results)
                         self.exporter.export_diagonistics(search_results)
                     
                 completion_msg = "Code duplication detection complete!"
-                self.console.print(f"\n{completion_msg}", style="bold green")
+                logger.info(completion_msg)
 
             except Exception as e:
-                pass
-                self.console.print(f"Failed to index: {e}")
+                logger.error(f"Failed to index: {e}", exc_info=True)
 
             finally:
                 # self.exporter.finalize_json_export()

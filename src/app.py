@@ -4,11 +4,18 @@ This module provides the main entry point for the code duplication detector
 command-line interface using Typer.
 """
 
+import logging
 import typer
 from typing import List, Optional
 from cli import DuplicationDetectionEngine
 from config.settings import default_similarity_threshold
 
+# Configure logging to output to terminal
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 app = typer.Typer(
     name="find-duplicates",

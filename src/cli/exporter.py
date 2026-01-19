@@ -9,10 +9,12 @@ import json
 import os
 import subprocess
 import sys
+import logging
 from pathlib import Path
 from typing import Dict, Any, Optional
-from rich.console import Console
 from config.settings import json_export_file, jsonl_export_file, export_dir
+
+logger = logging.getLogger(__name__)
 
 
 class Exporter:
@@ -35,7 +37,6 @@ class Exporter:
         self.auto_open: bool = kwargs.get("auto_open", False)
         self.export_dir: Path = Path(kwargs.get("export_dir", export_dir))
         self.verbose: bool = kwargs.get("verbose", False)
-        self.console = Console()
         
         # Track export state
         self.json_file_path: Optional[Path] =  self.export_dir / "diagnostics.json"
@@ -81,7 +82,7 @@ class Exporter:
             
         except (OSError, PermissionError) as e:
             # Fallback to current directory if Downloads not writable
-            # self.console.print(f"[yellow]Warning: Cannot write to {self.export_dir}, using current directory[/yellow]")
+            logger.warning(f"Cannot write to {self.export_dir}, using current directory")
             self.export_dir = Path.cwd() / "exports"
             self.export_dir.mkdir(exist_ok=True)
 
@@ -205,13 +206,7 @@ class Exporter:
         # Calculate file size for user info
         if file_path.exists():
             file_size = self._format_file_size(file_path.stat().st_size)
-            
-  
-            
-            # Create clickable file path for supported terminals
-            clickable_path = f"[link=file://{file_path.resolve()}]{file_path}[/link]"
-            # self.console.print(f"[cyan] Location: {clickable_path}[/cyan]")
-           
+            logger.info(f"{format_type} export completed: {file_path} ({file_size})")
             
             # Auto-open file if requested
             if self.auto_open:
@@ -247,9 +242,8 @@ class Exporter:
                 subprocess.run(["xdg-open", str(file_path)], check=True)
                             
         except (subprocess.SubprocessError, OSError, AttributeError) as e:
-            pass
-            # self.console.print(f"[yellow]Could not auto-open file: {e}[/yellow]")
-            # self.console.print(f"[dim]You can manually open: {file_path}[/dim]")
+            logger.warning(f"Could not auto-open file: {e}")
+            logger.info(f"You can manually open: {file_path}")
 
     def cleanup(self) -> None:
         """Clean up any temporary resources if needed."""
@@ -264,7 +258,7 @@ class Exporter:
         sys.stdout.write("\n")
 
     def export_diagonistics(self, search_results):
-        print(f"Export Path: {self.json_file_path}")
+        logger.info(f"Export Path: {self.json_file_path}")
         with open(self.json_file_path, "w", encoding="utf-8") as f:
             json.dump(search_results, f, indent=2, ensure_ascii=False, default=str)
 

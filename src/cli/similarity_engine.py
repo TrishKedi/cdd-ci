@@ -9,7 +9,6 @@ import logging
 import numpy as np
 import faiss
 from typing import Dict, Set, Any, List, Optional, AsyncGenerator, Tuple
-from rich.console import Console
 
 from .exporter import Exporter
 from .visualizer import Visualizer
@@ -118,15 +117,13 @@ class SimilarityEngine:
 
         self.exporter: Exporter = Exporter(auto_open=True, verbose=True)
         self.match_processor: MatchProcessor = MatchProcessor()
-        self.console: Console = Console()
 
     async def run_semantic_search(self, query: np.array, chunks: List[Dict[str, str]], index: faiss.Index) -> List[Tuple[str, str]]:
         search_results  = self.similarity_lookup.run_semantic_search(query, index)
         candidates = self.match_processor.replace_candidates(search_results)
-        # print(candidates[0])
-        # print(chunks)
-        # print(len(chunks))
-        # print(chunks[0])
+        logger.debug(f"Candidates: {candidates}")
+        logger.debug(f"Chunks: {chunks}")
+        logger.debug(f"Number of chunks: {len(chunks)}")
         diagnostics = [
             {
                 "message": f"similar to {candidates[i][0].get('path')}:{candidates[i][0].get('start')}-{candidates[i][0].get('end')}",
@@ -142,20 +139,10 @@ class SimilarityEngine:
             for i, chunk in enumerate(chunks)
         ]
 
-        # return diagnostics
-
         return {
             "source": {"name": "find-duplicates"},
             "diagnostics": diagnostics
         }
-        
-
-        # matches = await self.match_processor.process_matches(
-        #             chunks, 
-        #             search_results, 
-        #             self.similarity_threshold
-        #         )
-        # return matches
 
     async def run_exhaustive_similarity_lookup(self) -> None:
         """Execute the complete similarity search workflow across all configured indexes.
@@ -259,38 +246,35 @@ class SimilarityEngine:
         matches_found: int = 0
         
         # Use rich console status for real-time progress display
-        with self.console.status("[bold green]Searching for duplicate code patterns...", spinner="dots") as status:
-            # Async iteration over all possible index pairs for similarity search
-            async for query_pstn, query_index_id, cand_index_id, result in self.similarity_lookup.generate_lookup_results(self.index_path_id_map):
-                # Process raw FAISS results through match processor for filtering and deduplication
-                matches = await self.match_processor.process_matches(
-                    query_pstn, query_index_id, cand_index_id, result, 
-                    unique_matches, self.similarity_threshold
-                )
-                total_processed += 1
-                
-                # Update progress display every 10 items to avoid excessive UI updates
-                if total_processed % 10 == 0:
-                    status.update(f"[bold green]Processed {total_processed} code blocks, found {matches_found} matches...")
-                    # Notify web interface of progress updates for real-time dashboard
-                    if self.serve:
-                        await stream_progress_to_web(total_processed, matches_found)
+        logger.info("Searching for duplicate code patterns...")
+        # Async iteration over all possible index pairs for similarity search
+        async for query_pstn, query_index_id, cand_index_id, result in self.similarity_lookup.generate_lookup_results(self.index_path_id_map):
+            # Process raw FAISS results through match processor for filtering and deduplication
+            matches = await self.match_processor.process_matches(
+                query_pstn, query_index_id, cand_index_id, result, 
+                unique_matches, self.similarity_threshold
+            )
+            total_processed += 1
+            
+            # Update progress display every 10 items
+            if total_processed % 10 == 0:
+                logger.debug(f"Processed {total_processed} code blocks, found {matches_found} matches...")
+                # Notify web interface of progress updates for real-time dashboard
+                if self.serve:
+                    await stream_progress_to_web(total_processed, matches_found)
 
-                # Process matches if any were found after filtering
-                if matches and matches.get("matches"):
-                    matches_found += len(matches["matches"])
+            # Process matches if any were found after filtering
+            if matches and matches.get("matches"):
+                matches_found += len(matches["matches"])
 
-                    # Temporarily pause progress indicator to display match details cleanly
-                    status.stop()
-                    # Display matches in terminal only if not serving to web (avoid duplicate output)
-                    if not self.serve:
-                        self.visualizer.display_matches(matches)
-                    status.start()
+                # Display matches in terminal only if not serving to web (avoid duplicate output)
+                if not self.serve:
+                    self.visualizer.display_matches(matches)
 
-                    # Export matches to configured file formats
-                    if self.export:
-                        self.exporter.export(matches)
-                        
+                # Export matches to configured file formats
+                if self.export:
+                    self.exporter.export(matches)
+                    
         # Display completion summary with final statistics
      
         logger.info(f"Streaming similarity search completed: {total_processed} blocks, {matches_found} matches")
@@ -336,43 +320,40 @@ class SimilarityEngine:
         total_matches: int = 0                   # Total matches found across all batches
         
         # Use rich console status with distinct styling for batched mode
-        with self.console.status("[bold yellow]Searching and preparing batches for LLM re-ranking...", spinner="dots") as status:
-            # Async iteration over all possible index pairs for similarity search
-            async for query_pstn, query_index_id, cand_index_id, result in self.similarity_lookup.generate_lookup_results(self.index_path_id_map):
-                # Process raw FAISS results through match processor
-                matches = await self.match_processor.process_matches(
-                    query_pstn, query_index_id, cand_index_id, result, 
-                    unique_matches, self.similarity_threshold
-                )
-                total_processed += 1
-                
-                # Update progress less frequently (every 20 items) since batching has higher overhead
-                if total_processed % 20 == 0:
-                    status.update(f"[bold yellow]Processed {total_processed} blocks, prepared {batches_processed} batches...")
-                    # Notify web interface of progress for dashboard updates
-                    if self.serve:
-                        await stream_progress_to_web(total_processed, total_matches)
-                
-                # Only buffer matches that contain actual candidates (skip empty results)
-                if matches and matches.get("matches"):
-                    batch_buffer.append(matches)
-                    total_matches += len(matches["matches"])
-                
-                # Process accumulated batch when it reaches target size
-                if len(batch_buffer) >= batch_size:
-                    status.stop()
-                    # Process batch through LLM re-ranking pipeline
-                    await self.rerank_batch(batch_buffer)
-                    batches_processed += 1
-                    batch_buffer = []  # Clear buffer for next batch accumulation
-                    status.start()
+        logger.info("Searching and preparing batches for LLM re-ranking...")
+        # Async iteration over all possible index pairs for similarity search
+        async for query_pstn, query_index_id, cand_index_id, result in self.similarity_lookup.generate_lookup_results(self.index_path_id_map):
+            # Process raw FAISS results through match processor
+            matches = await self.match_processor.process_matches(
+                query_pstn, query_index_id, cand_index_id, result, 
+                unique_matches, self.similarity_threshold
+            )
+            total_processed += 1
             
-            # Handle remaining matches in partial final batch
-            if batch_buffer:
-                status.stop()
+            # Update progress less frequently (every 20 items) since batching has higher overhead
+            if total_processed % 20 == 0:
+                logger.debug(f"Processed {total_processed} blocks, prepared {batches_processed} batches...")
+                # Notify web interface of progress for dashboard updates
+                if self.serve:
+                    await stream_progress_to_web(total_processed, total_matches)
+            
+            # Only buffer matches that contain actual candidates (skip empty results)
+            if matches and matches.get("matches"):
+                batch_buffer.append(matches)
+                total_matches += len(matches["matches"])
+            
+            # Process accumulated batch when it reaches target size
+            if len(batch_buffer) >= batch_size:
+                # Process batch through LLM re-ranking pipeline
                 await self.rerank_batch(batch_buffer)
                 batches_processed += 1
-                
+                batch_buffer = []  # Clear buffer for next batch accumulation
+        
+        # Handle remaining matches in partial final batch
+        if batch_buffer:
+            await self.rerank_batch(batch_buffer)
+            batches_processed += 1
+            
         # Display completion summary with batch processing statistics
   
         logger.info(f"Batched similarity search completed: {total_processed} blocks, {batches_processed} batches, {total_matches} matches")

@@ -7,10 +7,12 @@ including cloning remote repositories and managing temporary directories.
 import os
 import shutil
 import subprocess
+import logging
 from typing import List, Optional, Dict
-from rich.console import Console
 from config.settings import tmp_dir
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class RepositoryManager:
@@ -21,8 +23,8 @@ class RepositoryManager:
     """
 
     def __init__(self) -> None:
-        """Initialize the repository manager with console output."""
-        self.console = Console()
+        """Initialize the repository manager."""
+        pass
 
 
     def _prepare_code_locations(
@@ -69,11 +71,7 @@ class RepositoryManager:
             True if validation passes, None if validation fails
         """
         if not candidate_repo and not changed_files:
-            self.console.print(
-                " You must provide candidate repository with --candidate-repo and changed files with --changed-files", 
-                style="red"
-            )
-
+            logger.error(" You must provide candidate repository with --candidate-repo and changed files with --changed-files")
             return None
             
         return True
@@ -82,31 +80,21 @@ class RepositoryManager:
         directory = Path(code_dir)
         
         if not directory.exists() or not directory.is_dir():
-            print(f"❌ {directory} is not a valid directory.")
-            # raise typer.Exit(code=1)
-            return
+            logger.error(f"❌ {directory} is not a valid directory.")
+            return None
 
         # Get list of all JS files and filter them
         return list(directory.rglob("*.js"))
 
     def get_changed_files(self, changed_files_path):
-        # print("Get changed files")
-        # print(changed_files_path)
-        # files = [
-        #     "../ui5-code-samples/code-samples-ui/Cart.controller.js",
-        #     "../ui5-code-samples/code-samples-ui/Category.controller.js",
-        #     "../ui5-code-samples/code-samples-ui/Checkout.controller.js"
-        # ]
-
-        # return [Path(file) for file in files]
-
-        print(changed_files_path)
+        logger.debug(f"Reading changed files from: {changed_files_path}")
         with open(changed_files_path, 'r', encoding='utf-8') as f:
             files = f.read()
-            print(files)
-            print(files.splitlines())
-            changed_files = [Path(file) for file in files.splitlines()]
-            print(changed_files)
+            logger.debug(f"Files content: {files}")
+            files_list = files.splitlines()
+            logger.debug(f"Parsed files list: {files_list}")
+            changed_files = [Path(file) for file in files_list]
+            logger.debug(f"Converted to Path objects: {changed_files}")
 
             return changed_files
 
