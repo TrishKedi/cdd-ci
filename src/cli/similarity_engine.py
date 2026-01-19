@@ -139,10 +139,12 @@ class SimilarityEngine:
             for i, chunk in enumerate(chunks)
         ]
 
-        return {
-            "source": {"name": "find-duplicates"},
-            "diagnostics": diagnostics
-        }
+        return diagnostics
+
+        # return {
+        #     "source": {"name": "find-duplicates"},
+        #     "diagnostics": diagnostics
+        # }
 
     async def run_exhaustive_similarity_lookup(self) -> None:
         """Execute the complete similarity search workflow across all configured indexes.
